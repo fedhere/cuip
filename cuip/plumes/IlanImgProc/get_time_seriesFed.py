@@ -1,24 +1,37 @@
+from __future__ import print_function, division
 import numpy as np
 import os
 import sys
-import os.path
 import glob
-import pylab as pl
 import datetime as dt
-import pylab as pl
 import matplotlib.pyplot as plt
 import pandas as pd
+import getCoords as gc
+
+sys.path.append(os.path.realpath('..'))
+import utils as utl
+from configs import *
 
 
+LOADSAVED = False
+NPHOTOS = 40
+DATE = '2013/10/26'
+NPTS = 5
 def get_dir_name(dir_path):
         '''return a list of string with names of directories 
         Arguments:
         dir_path: path to image directory
         '''
-	dirs = []
-	for item in os.listdir(dir_path):
-		if os.path.isdir(item) == True:
-			dirs.append(item)
+
+	#dirs = []
+	#for item in os.listdir(dir_path):
+#		if os.path.isdir(dir_path + item) == True: #ilan I had to change this, maybe you were in the local dir when running?
+#			dirs.append(item)
+	
+	# writing it in a more pythonc way to improve efficiency and style
+	dirs = np.array(os.listdir(dir_path))
+	dirs = dirs[[os.path.isdir(dir_path + d) for d in dirs]]
+
 	return dirs
 
 def img2D(file_name):
@@ -29,6 +42,7 @@ def img2D(file_name):
 	im2d /= im2d.max()
 	return im2d
 
+# this function would cause troubles cause you are loading too many images ar once. this overloads the memory easily - lets use the util library I wrote instead which also finds the right size of the image so it does not need to be hardcoded in
 def extract_images(path):
 	img_list = []
 	for filename in os.listdir(path):
@@ -36,21 +50,28 @@ def extract_images(path):
 	return img_list
 
 def extract_times(time_string):
-	n_photos = 40
-	base = dt.datetime.strptime(time_string, '%H.%M.%S') 
-	time_vector = [base + dt.timedelta(seconds = i*10) for i in range(0,n_photos)]
+	'''extract time stamp from image name assuming 10 sec intervals
+	Arguments:
+	     time_string - string: the name of the file directory containing a time stamp
+	'''
+	base = dt.datetime.strptime(DATE + ' ' + time_string.split('/')[-1], 
+				    '%Y/%m/%d %H.%M.%S') 
+	time_vector = [base + dt.timedelta(seconds = i * DT)
+		       for i in range(0, NPHOTOS)]
+	# print(time_vector)
 	return time_vector
 
 def prepare_data(rootdir, time_dirs):
 
 	image_list = []
 	time_list = []
-	for fldr in time_dirs:
-		home = os.path.join(rootdir, fldr)
-		image_list.append(extract_images(home))
-		time_list.append(extract_times(home))
+	for dr in [os.path.join(rootdir, fldr) for fldr in time_dirs]:
+		image_list += ['/'.join([rootdir,fldr,d]) for d in os.listdir(dr)]
+		time_list += extract_times(dr)
 
-	time_list = [item for sublist in time_list for item in sublist]
+	time_list = np.array(time_list).flatten()
+	image_list = np.array(image_list).flatten()
+
 	#image_list = [item for sublist in image_list for item in sublist]
 	return image_list, time_list
 
@@ -74,37 +95,85 @@ def load_index(root):
 	return sl_idx, city_idx, sky_idx
 	
 
-if __name__ == '__main__':
+def getts(skyline, lim=-1):
 	rootdir = os.getenv("ROOTDIR")
-	root = '/home/cusp/ir729/cuip/cuip/plumes/IlanImgProc/'
+	if rootdir is None:
+		print ("must set env variable ROOTDIR to plumes dir")
+		sys.exit()
+	#root = os.getenv("HOME") 'cuip/cuip/plumes/IlanImgProc/'  replacing this: it should be the local dir not a full path: my path to IlanImgProc is different! #lets set up an env variable CUIPLUMES
+	rootdir = rootdir + "/" + DATE + "/"
+	root = os.getenv("CUIPLUMES")
+	if root is None:
+		print ("must set env variable CUIPLUMES to plumes dir")
+		sys.exit()
+	#ilan I changed the data_path to out_path - call things data only if they contain the raw data
+	out_path = root + '/output'
+	if not os.path.isdir(out_path):
+		os.makedirs(out_path)
+
+	#TODO get better argument parser right now assume you can pass a skyline file
 	
-	data_path = '/home/cusp/ir729/data/'
-
-
-#	sl_idx, city_idx, sky_idx = load_index(root)
+        if LOADSAVED :
+		sl_idx, city_idx, sky_idx = load_index(root)
+	else:
+		sl_idx, city_idx, sky_idx = gc.img_points(skyline, 
+							  n=NPTS,
+							  show=False)
+	time_dirs = get_dir_name(rootdir)
+	time_dirs.sort()
 	
-#	time_dirs = get_dir_name(rootdir)
-	#time_dirs.sort()
+	image_list, time_list =	prepare_data(rootdir, time_dirs)	
+	pixels = np.hstack((sl_idx[::-1], 
+			    city_idx[::-1], 
+			    sky_idx[::-1]))
+	rawimgs =  utl.RawImages(fl=image_list,  lim=lim, 
+				 imsize = None, 
+				 pixels = np.array(zip(pixels[1], 
+						       pixels[0])))
+	sky = pd.DataFrame(data = {"times":time_list[:lim]})
+	skyline = pd.DataFrame(data = {"times":time_list[:lim]})
+	city = pd.DataFrame(data = {"times":time_list[:lim]})
 
-	#image_list, time_list =	prepare_data(rootdir, time_dirs)
+	dfs = {"skyline":skyline, "city":city, "sky":sky}
+	for i in range(NPTS):
+		for j,dfn in enumerate(dfs):
+			df = dfs[dfn]
+			df["R%03d"%i] = rawimgs.pixvals[:,i + j*NPTS,0] /\
+			    np.median(rawimgs.pixvals[:,i + j*NPTS,0])
+			df["G%03d"%i] = rawimgs.pixvals[:,i + j*NPTS,1] /\
+			    np.median(rawimgs.pixvals[:,i + j*NPTS,1])
+			df["B%03d"%i] = rawimgs.pixvals[:,i + j*NPTS,2] /\
+			    np.median(rawimgs.pixvals[:,i + j*NPTS,2])
+			df["x%03d"%i] = pixels[0,i]
+			df["y%03d"%i] = pixels[1,i]
+			
+			df["mean%03d"%i] = (np.mean(
+					np.array([df["R%03d"%i],
+						  df["G%03d"%i],
+						  df["B%03d"%i]]),
+					axis=0))
+			df["scene"] = [dfn]*len(df.times.values)
+	return sky, skyline, city
+
+if __name__ == '__main__':
+	skyline = np.load(sys.argv[1])
+
+	sky, skyline, city = getts(skyline)
+	usefulcols = ["times"] + ["mean%03d"%i for i in range(NPTS)]
 	
-	sky = pd.read_csv(data_path + 'data_sky.csv')
-	skyline = pd.read_csv(data_path + 'data_skyline.csv')
-	city = pd.read_csv(data_path + 'data_city.csv')
+	sky[usefulcols].plot(x = "times", subplots = True, 
+			     figsize = (9, 12), title = 'Sky')
+	skyline[usefulcols].plot(x = "times", subplots = True, 
+				 figsize = (9, 12), title = 'Skyline')
+	city[usefulcols].plot(x = "times", subplots = True, 
+			      figsize = (9, 12), title = 'City')
 
-	sky.plot(x = sky.times, subplots = True, figsize = (9, 12), title = 'Sky')
-	skyline.plot(x = skyline.times, subplots = True, figsize = (9, 12), title = 'Skyline')
-	city.plot(x = city.times, subplots = True, figsize = (9, 12), title = 'City')
-
-	sky.plot.hist(subplots = True, figsize = (9, 12), title = 'Sky', bins = 30)
-	skyline.plot.hist(subplots = True, figsize = (9, 12), title = 'Skyline', bins = 30)
-	city.plot.hist(subplots = True, figsize = (9, 12), title = 'City', bins = 30)
+	sky[usefulcols].plot.hist(subplots = True, figsize = (9, 12), 
+				  title = 'Sky', bins = 30)
+	skyline[usefulcols].plot.hist(subplots = True, 
+				      figsize = (9, 12), 
+				      title = 'Skyline', bins = 30)
+	city[usefulcols].plot.hist(subplots = True, figsize = (9, 12), 
+				   title = 'City', bins = 30)
 	plt.show()
-	
-	
-
-	
-
-	
-	
-
+	raw_input()
