@@ -24,59 +24,47 @@ def showme(image, ax=None, cmap=None):
     ax.axis('off')
 
 def skyline(image, imgname, plotme=False):
+    '''Take image, increase contrast and smooth. 
+    Apply Sobel filter and find the skyline using gradient by column.
+    Return max gradient closest to the top of the image.
+    '''
+    
+    img = image.astype(float) 
 
-	#Convert the image to float
-	img = rawimg.astype(float)
-
-	#Increase contrast
-	img *= 255 / img.max() 
-
-	#Reshape from 3D to 2D, normalize
-	img2d = (img.reshape([2160, 4096, 3]).sum(2) / 3.)
-	img2d /= img2d.max()
-
-	#In order to extract the skyline we smooth the image
-	#by using a Gaussian filter. 
-	smoothImg = nd.filters.gaussian_filter(img2d, [8, 8])
-
-	#Now we brighten and highlight the upper half of the image
-	#by using an increasing array.
-	smoothImgEn = smoothImg[:,:] * (np.atleast_2d(np.linspace(1, 0, smoothImg.shape[0])).T)**2
-
-	#We now apply a Sobel filter to find the edges 
-	#of the image so we can identify the skyline pixels.
-	edge = skfl.sobel(smoothImgEn)
-
-	#In order to start filtering lines from the clouds and 
-	#the lower part of the buildings we filter the image
-	#by making zero those pixels that are under a threshold value
-	#this value was determined by analyzing the historgram the image
-
-	edge[edge < 0.0025] = 0.0
-	#showme(edge, cmap = 'gray')
-
-	#Now we can select a first skyline by breaking the image column-wise
-	#and taking the gradient of each column. Then the gradient is sorted in such way that the 
-	#we select the value that is closest to the top of the image. We select the top 20
-	#values and select the minimum.
-
-	rows = edge.shape[0]
-	cols = edge.shape[1]
+    img *= 255 / img.max() 
 	
-	grad_max = []
-	for i in range(cols):
-		grad = np.gradient(edge[:,i])
-		grad_max.append(np.argpartition(grad, -20)[-20:].min())
+    img2d = (img.reshape([2160, 4096, 3]).sum(2) / 3.)
+    img2d /= img2d.max()
 
-        if plotme:
-            showme(edge, cmap = 'gray')
-            plt.plot(np.arange(cols), grad_max, 'g-', ms = 1.5)
-            plt.show()
-	np.save(imgname.split('.')[0] + '_skyline', grad_max)
-	return grad_max
+    smoothImg = nd.filters.gaussian_filter(img2d, [8, 8]) #apply gaussian filter to smooth the image and improve the edge detection
 
+    smoothImgEn = smoothImg[:,:] * (np.atleast_2d(np.linspace(1, 0, smoothImg.shape[0])).T)**2 #increasing the contrast of the top section of the image
 
-#Read image
+    edge = skfl.sobel(smoothImgEn) #new image with sobel edges
+
+    edge[edge < 0.0025] = 0.0 #filtering after reviewing histogra of pixels
+    #showme(edge, cmap = 'gray')
+
+    rows = edge.shape[0]
+    cols = edge.shape[1]
+	
+    grad_max = []
+    for i in range(cols):
+       	grad = np.gradient(edge[:,i]) # take the gradient of each column
+        top_min = np.argpartition(grad, -20)[-20:].min() # select the minimum index (highest point) of 20 maximum gradient candidates
+        if top_min > 732: #vertical threshold set by inspection
+            top_min = 732
+        grad_max.append(top_min)
+
+    if plotme:
+        showme(edge, cmap = 'gray')
+        plt.plot(np.arange(cols), grad_max, 'g-', ms = 1.5)
+        plt.axhline(y = 732)
+        plt.show()
+ 
+    np.save(imgname.split('.')[0] + '_skyline', grad_max)
+    return grad_max
+
 
 #path = 'cuip/cuip/plumes/IlanImgProc/'
 
@@ -84,6 +72,7 @@ if __name__ == '__main__':
     imgname = 'img1.raw'
     rawimg = np.fromfile(imgname, np.uint8)
     skl = np.load('img1_skyline.npy')
+    #skyline(rawimg, imgname, plotme = True)
     print (skl)
 
 
