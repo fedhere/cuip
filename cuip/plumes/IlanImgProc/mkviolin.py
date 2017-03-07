@@ -3,8 +3,13 @@ import numpy as np
 import seaborn as sns
 import get_time_seriesFed as gt
 import pylab as pl
+import sys
+import os
 
-NPTS=10
+sys.path.append(os.path.realpath('..'))
+import utils as utl
+from configs import *
+
 skyline =np.load("img1_skyline.npy")
 sk, sl, ct = gt.getts(skyline, n=NPTS, lim=-1)
 all3 = []
