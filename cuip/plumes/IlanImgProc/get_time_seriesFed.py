@@ -126,10 +126,12 @@ def getts(skyline, lim=-1):
 	pixels = np.hstack((sl_idx[::-1], 
 			    city_idx[::-1], 
 			    sky_idx[::-1]))
+
 	rawimgs =  utl.RawImages(fl=image_list,  lim=lim, 
 				 imsize = None, 
 				 pixels = np.array(zip(pixels[1], 
 						       pixels[0])))
+
 	sky = pd.DataFrame(data = {"times":time_list[:lim]})
 	skyline = pd.DataFrame(data = {"times":time_list[:lim]})
 	city = pd.DataFrame(data = {"times":time_list[:lim]})
