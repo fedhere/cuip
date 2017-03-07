@@ -16,7 +16,7 @@ from configs import *
 LOADSAVED = False
 NPHOTOS = 40
 DATE = '2013/10/26'
-NPTS = 5
+
 def get_dir_name(dir_path):
         '''return a list of string with names of directories 
         Arguments:
@@ -95,7 +95,7 @@ def load_index(root):
 	return sl_idx, city_idx, sky_idx
 	
 
-def getts(skyline, lim=-1):
+def getts(skyline, n=NPTS, lim=-1):
 	rootdir = os.getenv("ROOTDIR")
 	if rootdir is None:
 		print ("must set env variable ROOTDIR to plumes dir")
@@ -117,7 +117,7 @@ def getts(skyline, lim=-1):
 		sl_idx, city_idx, sky_idx = load_index(root)
 	else:
 		sl_idx, city_idx, sky_idx = gc.img_points(skyline, 
-							  n=NPTS,
+							  n=n,
 							  show=False)
 	time_dirs = get_dir_name(rootdir)
 	time_dirs.sort()
@@ -126,18 +126,22 @@ def getts(skyline, lim=-1):
 	pixels = np.hstack((sl_idx[::-1], 
 			    city_idx[::-1], 
 			    sky_idx[::-1]))
+
 	rawimgs =  utl.RawImages(fl=image_list,  lim=lim, 
 				 imsize = None, 
 				 pixels = np.array(zip(pixels[1], 
 						       pixels[0])))
+
 	sky = pd.DataFrame(data = {"times":time_list[:lim]})
 	skyline = pd.DataFrame(data = {"times":time_list[:lim]})
 	city = pd.DataFrame(data = {"times":time_list[:lim]})
 
 	dfs = {"skyline":skyline, "city":city, "sky":sky}
-	for i in range(NPTS):
+
+        for i in range(NPTS):
 		for j,dfn in enumerate(dfs):
 			df = dfs[dfn]
+                        
 			df["R%03d"%i] = rawimgs.pixvals[:,i + j*NPTS,0] /\
 			    np.median(rawimgs.pixvals[:,i + j*NPTS,0])
 			df["G%03d"%i] = rawimgs.pixvals[:,i + j*NPTS,1] /\

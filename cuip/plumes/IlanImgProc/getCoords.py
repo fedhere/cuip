@@ -1,7 +1,12 @@
+import sys
+import os
 import numpy as np
 import scipy.ndimage as nd
 from skyline import skyline
 import pylab as pl
+
+sys.path.append(os.path.realpath('..'))
+from configs import *
 
 def img_points(skyline, n=5, save=False, seed=111, show=False, imgPath="img1.raw"):
 	'''finds pixels on, ver and below the skyline
@@ -20,7 +25,7 @@ def img_points(skyline, n=5, save=False, seed=111, show=False, imgPath="img1.raw
 	sl = skyline[x_rand] # the skyline y pixels of the n x coordinates
 	#city = [1000] * n ##what is this?
 	#sky = [150] * n ## what is this?
-	maxCity = int(2160 * 0.75)
+	maxCity = int(IMYSIZE * 0.75) #bottom quarter is the highway and water - remove
 	
 	#chosing a random y for each x
 	sky_idx  = np.array([[np.random.randint(0, sl[i] - 30) for i in range(n)], 
@@ -36,8 +41,8 @@ def img_points(skyline, n=5, save=False, seed=111, show=False, imgPath="img1.raw
 	
 	if show:
 		pl.figure()
-		pl.imshow(np.fromfile(imgPath, np.uint8).reshape([2160,
-							   4096,3]))
+		pl.imshow(np.fromfile(imgPath, np.uint8).reshape([IMYSIZE,
+							          IMXSIZE,3]))
 		pl.plot(city_idx[1], city_idx[0], '.')				   
 		pl.plot(sky_idx[1], sky_idx[0], '.')				   
 		pl.plot(range(skyline.shape[0]), skyline, 'k.')

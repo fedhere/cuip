@@ -10,25 +10,31 @@ from scipy.ndimage.filters import gaussian_filter as gf
 from utils import RawImages
 from configs import *
 #from plm_images import *
-
-
+median = False
+median = True
     
-def subforg(difs, allframes, i, j, fname):
+def subforg(difs, allframes, i, j, fname, median):
 #image loop
     #lf must be odd
     fulllen = np.prod(allframes[0].shape)
     frames = allframes[i-j:i+j+1]
     lf = int(len(frames) / 2)
     
-    #print('working on {0}'.format(i))
-    dif = abs(- 1.0 * np.concatenate([frames[:lf], 
-                                   frames[(lf+1):]]) + 1.0 * frames[lf]).min(0)
+    if median:
+        diffs = np.abs(frames[lf] - np.median(np.concatenate([frames[:lf], 
+                                                       frames[(lf+1):]]),
+                                              axis=0) )
+        fnameout = OUTPUTDIR + "/" + fname + '_%04d_median.npy'%i
+    else:
+        dif = abs(- 1.0 * np.concatenate([frames[:lf], 
+                        frames[(lf+1):]]) + 1.0 * frames[lf]).min(0)
+        fnameout = OUTPUTDIR + "/" + fname + '_%04d.npy'%i
     ##for jj, fr in enumerate(frames):
     ##    dif[jj] = 1.0 * raw.imgs[ii] - 1.0 * raw.imgs[fr]
     #print(i,'here', frames.shape, dif.shape)#[0,0,0,:5])
     #tmp = abs(dif).min(0)
     #difs[i*fulllen: i*fulllen+len(tmp.flatten())] = tmp.flatten()
-    np.save(OUTPUTDIR + "/" + fname + '_%04d.npy'%i, dif)
+    np.save(fnameout, dif)
 
 if __name__=='__main__':
 
@@ -57,7 +63,10 @@ if __name__=='__main__':
     #              itertools.repeat(5)))
     #pool.close
     print("before ",difs[6])
-    processes = [mpc.Process(target=subforg, args=(difs, raw.imgs, i, WINDOW, 'tmp')) for i in range(WINDOW, lim)]
+    processes = [mpc.Process(target=subforg, args=(difs, raw.imgs,
+                                                   i, WINDOW,
+                                                   'tmp', median))
+                 for i in range(WINDOW, lim)]
 
     for p in processes:
         p.start()
