@@ -10,7 +10,7 @@ ax2 = fig.add_subplot(212)
 flist = glob.glob("outputs/*npy")
 fim = np.load(flist[0])
 im = ax1.imshow(fim)
-bars,bins = np.histogram(fim.flatten())
+bars,bins = np.histogram(fim.flatten(), bins=range(0,275,20))
 hist = ax2.bar(bins[:-1], bars, bins[1]-bins[0])
 
 for f in flist:
