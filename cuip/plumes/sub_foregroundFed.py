@@ -38,8 +38,9 @@ if __name__=='__main__':
 
     # -- get the raw images
     raw = RawImages(fl=fl, lim=LIM)
+
     # set the image numbers
-    lim = LIM-WINDOW if LIM > 0 else len(fl)-WINDOW
+    lim = LIM - WINDOW if LIM > 0 else len(fl) - WINDOW
 
     # -- initialize the the difference image list
     difs = np.zeros([lim] + list(raw.imgs[0].shape))
@@ -47,13 +48,14 @@ if __name__=='__main__':
 
     # -- loop through the images
     nps = min(mpc.cpu_count() - 1 or 1, MAXPROCESSES)
+    print ("number of processors:", nps)
 
     #pool = mpc.Pool(processes=nps)
-#print([raw.imgs[i-5:i+6].flatten().shape for i in range(5, lim)])
-#sys.exit()
-#tmp = pool.map(subforg, itertools.izip([raw.imgs[i-5:i+6] for i in range(5, lim)], 
-#              itertools.repeat(5)))
-#pool.close
+    #print([raw.imgs[i-5:i+6].flatten().shape for i in range(5, lim)])
+    #sys.exit()
+    #tmp = pool.map(subforg, itertools.izip([raw.imgs[i-5:i+6] for i in range(5, lim)], 
+    #              itertools.repeat(5)))
+    #pool.close
     print("before ",difs[6])
     processes = [mpc.Process(target=subforg, args=(difs, raw.imgs, i, WINDOW, 'tmp')) for i in range(WINDOW, lim)]
 
