@@ -3,7 +3,7 @@ from configs import *
 from findImageSize import findsize as fs
 
 class RawImages:
-    def __init__(self, fl=None,  lim=-1,imsize = None, pixels=None, mmap=True):
+    def __init__(self, fl=None,  lim=-1, imsize = None, pixels=None, mmap=True):
         
         self.imsize = imsize
         self.pixels = pixels
