@@ -57,12 +57,11 @@ def findsize(imgfile, nbands = 3, filepattern = None, imsizefile = None,
             imgsize = json.load(open(outputdir + imsizefile, 'r'))
             return imgsize
     if filepattern:
-        print (outputdir + filepattern + "_imgsize.txt")
+        print ("filesize file:" + outputdir + filepattern + "_imgsize.txt")
         if os.path.isfile(outputdir + filepattern + "_imgsize.txt"):
             imgsize = json.load(open(outputdir + filepattern \
                                      + "_imgsize.txt", 'r'))
             return imgsize
-
 
     # if thr shape needs to be recinstructed
     # show the image with different shape assumptions and

@@ -13,3 +13,5 @@ try:
 except KeyError:
     DST_WRITE = os.environ['HOME']
 DT = 10 # time interval between images
+#METHOD = "median"
+METHOD = "mindiff"
