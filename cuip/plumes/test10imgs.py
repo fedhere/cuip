@@ -29,7 +29,7 @@ for i,f in enumerate(sorted(glob.glob(os.path.join(PLUMES, 'outputs/tmp_01[345][
 #set number of bins to 64 or Rice method
 #save the X and Y (bin heights) components from histograms
 
-BINS = int(round(2*len(img_med[0].flatten())**(1./3.)))
+BINS = 64#int(round(2*len(img_med[0].flatten())**(1./3.)))
 y_med = np.zeros((30, BINS))
 y_mdif = np.zeros((30, BINS))
 x = np.zeros(BINS)
@@ -55,7 +55,7 @@ bins_cen = x[:-1] + 0.5*(x[1]-x[0])
 
 #Create two new dataframes for simplicity. Already saved in IlanImgProc/
 
-cols = ['img_%d'%(i) for i in range(130,160)]
+cols = ['img%d'%(i) for i in range(130,160)]
 
 median_data = pd.DataFrame(ymed_log.T, columns = cols)
 median_data.insert(0, 'X', bins_cen)
