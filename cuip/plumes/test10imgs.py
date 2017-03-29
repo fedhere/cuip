@@ -12,8 +12,8 @@ import gaussfit as gf
 
 ### Read in 30 images (130 to 159) from both median.npy and mindif.npy and store in arrays.
 ### Create histogram objects and extract X and Y values for each image
-imgpath1 =  os.path.join(PLUMES,'outputlfs/tmp_*_median.npy')
-imgpath2 =  os.path.join(PLUMES,'outputlfs/tmp_*_mindif.npy')
+imgpath1 =  os.path.join(PLUMES,'outputs/tmp_*_median.npy')
+imgpath2 =  os.path.join(PLUMES,'outputs/tmp_*_mindif.npy')
 
 #print imgpath
 imglist1 = sorted(glob.glob(imgpath1))
