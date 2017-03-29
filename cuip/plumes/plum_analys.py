@@ -49,7 +49,7 @@ for i in range(1, ncols):
 
 #selecting the images with plumes and those without
 mask =  np.ones(ncols-1, dtype=bool)
-mask[13:18] = False
+mask[12:23] = False
 
 ###Sigma values from original ditribution
 #median
@@ -86,17 +86,27 @@ sns.set_style('whitegrid')
 sns.distplot(md_nplum, hist = False, label = 'No Plume Sigmas', ax = ax1)
 sns.distplot(md_plum, hist = False, label = 'Plume Sigmas', ax = ax1)
 
-#media 
+#mindif
 ax2.set_title('Real Image Variance (mindif)')
 sns.distplot(mn_nplum, hist = False, label = 'No Plume Sigmas', ax = ax2)
 sns.distplot(mn_plum, hist = False, label = 'Plume Sigmas', ax = ax2)
 pl.show(block = True)
 
 
+###Plotting for fitted distributions
 #mindif
-#plt.figure()
-#plt.title('Fitted Image Variance comparison (median)')
-#sns.distplot(fit_nplm, hist = False, label = 'No Plume Sigmas')
-#sns.distplot(fit_plm, hist = False, label = 'Plume Sigmas')
+plt.figure()
+plt.title('Fitted Image Variance comparison (median)')
+sns.distplot(fit_nplm, hist = False, label = 'No Plume Sigmas')
+sns.distplot(fit_plm, hist = False, label = 'Plume Sigmas')
+
+
+
+
+
+
+
+
+
 
 
