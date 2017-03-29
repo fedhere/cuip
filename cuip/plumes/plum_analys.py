@@ -90,7 +90,7 @@ sns.distplot(md_plum, hist = False, label = 'Plume Sigmas', ax = ax1)
 ax2.set_title('Real Image Variance (mindif)')
 sns.distplot(mn_nplum, hist = False, label = 'No Plume Sigmas', ax = ax2)
 sns.distplot(mn_plum, hist = False, label = 'Plume Sigmas', ax = ax2)
-pl.show()
+pl.show(block = True)
 
 
 #mindif
