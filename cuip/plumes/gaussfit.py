@@ -15,7 +15,7 @@ def lorentzian(x, *p):
 
 def lorentzfit(datay, datax, A, x0):
 	coeff, var = curve_fit(lorentzian, datax, datay, p0 = [A, x0])
-	return lorentzian(datax, *coeff)  #, coeff[0], coeff[1]
+	return lorentzian(datax, *coeff), coeff#, coeff[0], coeff[1]
 
 
 #Lorentzian first guess
