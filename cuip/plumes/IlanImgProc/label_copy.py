@@ -21,7 +21,7 @@ def getregion(img):
     tmp2 = rebin(img, (img.shape[0]/4, img.shape[1]/4))
 
     imgtmp = tmp2.copy()
-    imgtmp[tmp2<10]=0
+    imgtmp[tmp2<np.mean(tmp2) + 3.0*np.std(tmp2)]=0
     imgtmp[imgtmp>0]=1
     
 
