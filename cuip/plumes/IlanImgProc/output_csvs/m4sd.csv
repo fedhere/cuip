@@ -1,3 +1,4 @@
+#image,n_patches,2nd_largest_patch,patch_50+_pix,n_features,mean_patch_size,largest_patch
 outputs/tmp_0005_median.npy , 21 , 4 , 1 , 996 , 1.21052631579 , 330820
 outputs/tmp_0006_median.npy , 14 , 14 , 1 , 560 , 2.5 , 331775
 outputs/tmp_0007_median.npy , 25 , 9 , 1 , 1328 , 1.65217391304 , 329447

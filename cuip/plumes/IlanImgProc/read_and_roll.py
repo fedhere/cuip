@@ -9,7 +9,7 @@ sns.set()
 
 
 
-def read_and_plot(data_csv, plot = False):
+def read_and_plot(file_path, plot = False):
     """
     Take csv, clean it and plot all its features as subplots.
     Input is a data frame
@@ -17,7 +17,7 @@ def read_and_plot(data_csv, plot = False):
     As default, no plot is generated, only the dataframe is returned
     """
     col_names = ['image', 'n_patches','2nd_largest_patch','patch_50+_pix','n_features','mean_patch_size', 'largest_patch']
-    df = pd.read_csv(data_csv, header = None, names=col_names)
+    df = pd.read_csv(file_path, header = None, names=col_names)
     df.loc[:,'image'] = np.array([int(l[12:16].strip().split()[0]) for l in df.loc[:,'image']])
     df.index = df.image
     df.drop('image', axis = 1, inplace = True)
@@ -42,14 +42,16 @@ def roll_and_plot(data_column, window = 100, plot = False, table = False):
     
     unsmooth = data_column
 
-    smooth = unsmooth.rolling(window = window, center = False, axis = 0).mean()
-    smooth_sd = unsmooth.rolling(window = window, center = False, axis = 0).std()
+    smooth = unsmooth.rolling(window = window, center = True, axis = 0).mean()
+    smooth_sd = unsmooth.rolling(window = window, center = True, axis = 0).std()
     final = pd.DataFrame({'unsmooth':unsmooth, 'smooth':smooth, 'smooth_std':smooth_sd})
     
     if plot:
         ax = final.unsmooth.plot(figsize = (8,8), linestyle = 'none', marker = '.')
-        final[['smooth', 'smooth_std']].plot(ax = ax)
         final.unsmooth[135:155].plot(ax = ax, marker = '.', linestyle = 'none', c = 'y')
+        
+        final[['smooth', 'smooth_std']].plot(ax = ax)
+        
         plt.title(' Rolling window 100 images', size = 15)
         plt.legend(['Images', 'Mean','St Dev', 'Plumes'], loc = 2)
         plt.ylabel(str(data_column.name + ' (Pixels)'), size = 13)
