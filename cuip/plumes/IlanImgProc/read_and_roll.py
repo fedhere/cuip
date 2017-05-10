@@ -16,11 +16,11 @@ def read_and_plot(file_path, plot = False):
     Return a Pandas Dataframe and the plot with plumes highlighted
     As default, no plot is generated, only the dataframe is returned
     """
-    col_names = ['image', 'n_patches','2nd_largest_patch','patch_50+_pix','n_features','mean_patch_size', 'largest_patch']
-    df = pd.read_csv(file_path, header = None, names=col_names)
+    #col_names = ['image', 'n_patches','2nd_largest_patch','patch_50+_pix','n_features','mean_patch_size', 'largest_patch']
+    df = pd.read_csv(file_path, index_col = 'image')
     df.loc[:,'image'] = np.array([int(l[12:16].strip().split()[0]) for l in df.loc[:,'image']])
-    df.index = df.image
-    df.drop('image', axis = 1, inplace = True)
+    df.index = df['image']
+    del df['image']
 
     if plot:
         ax = df.plot(subplots = True,figsize = (8,8), title = str(data_csv))
@@ -42,31 +42,31 @@ def roll_and_plot(data_column, window = 100, plot = False, table = False):
     
     unsmooth = data_column
 
-    smooth = unsmooth.rolling(window = window, center = True, axis = 0).mean()
-    smooth_sd = unsmooth.rolling(window = window, center = True, axis = 0).std()
-    final = pd.DataFrame({'unsmooth':unsmooth, 'smooth':smooth, 'smooth_std':smooth_sd})
+    x = np.arange(0,len(unsmooth),1)
     
-    if plot:
-        ax = final.unsmooth.plot(figsize = (8,8), linestyle = 'none', marker = '.')
-        final.unsmooth[135:155].plot(ax = ax, marker = '.', linestyle = 'none', c = 'y')
-        
-        final[['smooth', 'smooth_std']].plot(ax = ax)
-        
-        plt.title(' Rolling window 100 images', size = 15)
-        plt.legend(['Images', 'Mean','St Dev', 'Plumes'], loc = 2)
-        plt.ylabel(str(data_column.name + ' (Pixels)'), size = 13)
-        plt.xlabel('Image', size = 13)
-        plt.show()
-        plt.savefig(str(data_column.name + '_roll.pdf'))
+    smooth_g = unsmooth.rolling(window = 40, center = True).mean()
+    g = ndimage.filters.gaussian_filter(unsmooth, sigma = 20)
+    smooth_sd = unsmooth.rolling(window = 40, center = True).std()
+    f3sd = smooth_g + 3.*smooth_sd
     
-    if table:  
-        return final
+    
+    plt.figure(figsize = (7,5))
+    plt.plot(x, unsmooth, linestyle = 'none', marker = '.')
+    plt.plot(x, g, linestyle = 'none', marker='.')
+    plt.plot(x, f3sd, linestyle = '--')
+    plt.title('Second Largest Patch')
+    plt.xlabel('Image')
+    plt.ylabel('Patch Size (Pixels)')
+    plt.legend(['Real', 'Gaussian', 'Gaussian + 3STD'])
+    plt.show()
+    
     
     
 if __name__ == '__main__':
     
-    df = read_and_plot(sys.argv[1], plot = False)
-    column = df[sys.argv[2]]
+    df = read_and_plot('output_csvs/m3sd.csv', plot = False)
+    x =
+    column = df[]
     roll_and_plot(column, plot = True)
     
     
