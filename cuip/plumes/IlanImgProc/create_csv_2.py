@@ -1,8 +1,9 @@
 # %load label_copy.py
 import scipy as sp
 from scipy import ndimage
-import pylab as pl
-from skimage import filters
+import os
+import glob
+import numpy as np
 import csv
 
 
@@ -35,48 +36,37 @@ def getregion(img, threshold):
     
     imgtmp[imgtmp>0]=1
     
-    labels, n_features = ndimage.measurements.label(imgtmp)
+    labels, nlbl = ndimage.measurements.label(imgtmp)
+    lbl_names = np.arange(1, nlbl+1)
     
-    labelsize = np.array([(labels==i).sum() for i in range(labels.max()+1)])
-    lbl_names = np.unique(labels)
+    labelsize = ndimage.measurements.sum(imgtmp, labels, index = lbl_names)
+
+
     labs = np.unique(labelsize)
     labdiff = np.diff(np.unique(labelsize))
-   
-    mean_x = np.zeros(len(lbl_names[1:]))
-    mean_y = np.zeros(len(lbl_names[1:]))    
-    sdx = np.zeros(len(lbl_names[1:]))
-    sdy = np.zeros(len(lbl_names[1:]))
     
-    for i,j in enumerate(lbl_names[1:]):
-        x,y = np.where(labels == j)
-        #print i,len(x),len(y)
-        
-        mean_x[i] = x.mean()
-        mean_y[i] = y.mean()
-        sdx[i] = x.std()
-        sdy[i] = y.std()
-    
-    
-    top_idx = sorted(range(len(labelsize[1:])), key=lambda i: labelsize[1:][i], reverse=True)[:2]
-    
-    mx1,mx2 = mean_x[top_idx[0]],mean_x[top_idx[1]]
-    my1,my2 = mean_y[top_idx[0]],mean_y[top_idx[1]]
-    sdx1,sdx2 = sdx[top_idx[0]], sdx[top_idx[1]]
-    sdy1,sdy2 = sdy[top_idx[0]], sdy[top_idx[1]]
-   
+    centroid = ndimage.measurements.center_of_mass(imgtmp, labels, index = lbl_names)
 
-    return(len(labs),np.max(labdiff[:-1]),(labdiff>=50).sum(),n_features,
-           np.mean(labdiff[:-1]),
-           sdx1,sdy1,sdx2,sdy2,mx1,my1,mx2,my2)
+    cent_x = np.zeros(len(centroid))
+    cent_y = np.zeros(len(centroid))
+
+    for i in range(len(centroid)):
+        cent_x[i] = centroid[i][0]
+        cent_y[i] = centroid[i][1]
+   
+    displ_x = np.diff(cent_x)
+    displ_y = np.diff(cent_y)
+    
+    return(len(labs), np.max(labelsize), (labelsize>=50).sum(), nlbl,
+           labelsize.mean(), labelsize.std(), displ_x.mean(), displ_y.mean(), displ_x.std(), displ_y.std())
 
 
 def create_csv(ifile_path, ofile_path, threshold):
     tmp = np.sort(glob.glob(ifile_path))
     csvfile = open(ofile_path,'w')
     col_names = ['image', 'n_patches','largest_patch','patch_50+_pix',
-                 'n_features','mean_patch_size','sdx_largest',
-                 'sdy_largest','sdx_2nd_largest','sdy_2nd_largest',
-                'center_X_largest','center_Y_largest','center_X_2largest','center_Y_2largest']
+                 'n_features','mean_patch_size', 'std_patch_size', 'mean_displ_X',
+                 'mean_displ_Y', 'std_displ_X', 'std_displ_Y']
     
     writer = csv.writer(csvfile, delimiter=',',lineterminator='\n')
     writer.writerow(col_names)
@@ -90,9 +80,9 @@ def create_csv(ifile_path, ofile_path, threshold):
         writer.writerow(line)
     #csvfile.close()
     
-#if __name__ == '__main__':
-#    plot = PLOT
-#    plumes = os.getenv('PLUMES')
-#    imgpath = os.path.join(plumes,'outputs/tmp_0*_mindif.npy')
+if __name__ == '__main__':
+    plot = PLOT
+    plumes = os.getenv('PLUMES_DATA')
+    imgpath = os.path.join(plumes,'outputs/tmp_0*_median.npy')
 
-#    create_csv(imgpath,'output_csvs/mean+4sd_mindif.csv', threshold = 'm4sd')
+    create_csv(imgpath,'output_csvs/mean+4sd_median_2.csv', threshold = 'm4sd')
